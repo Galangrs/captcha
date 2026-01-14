@@ -1,9 +1,10 @@
 [build]
   functions = "netlify/functions"
-  publish = "src/public"
+  publish = "public"
 
 [functions]
   node_bundler = "esbuild"
+  included_files = ["src/public/**"]
 
 [[redirects]]
   from = "/*"
