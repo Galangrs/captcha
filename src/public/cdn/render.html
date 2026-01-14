@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Check</title>
+    <style>
+        :root {
+            --primary-hsl: 215, 100%, 50%;
+            --primary-color: hsl(var(--primary-hsl));
+            --primary-glow: hsla(var(--primary-hsl), 0.15);
+
+            --success-color: #059669;
+            --error-color: #ef4444;
+
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.4);
+            --widget-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --border-hover: #d1d5db;
+
+            --font-main: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-premium: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-glass: rgba(17, 24, 39, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --widget-bg: #111827;
+            --text-color: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --border-hover: #4b5563;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            font-family: var(--font-main);
+        }
+
+        body {
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- Main Widget Container --- */
+        .samdues-widget {
+            width: 100%;
+            max-width: 300px;
+            height: 65px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .samdues-widget.locked {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        .samdues-widget::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-glass), transparent);
+        }
+
+        .samdues-widget:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* --- Left Side: Checkbox & Text --- */
+        .samdues-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            height: 100%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .samdues-checkbox {
+            width: 26px;
+            height: 26px;
+            background: var(--widget-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .samdues-widget:hover .samdues-checkbox {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .samdues-checkbox.success {
+            border-color: var(--success-color);
+            background: var(--success-color);
+        }
+
+        .samdues-checkbox.success .samdues-checkmark {
+            display: flex;
+            /* Changed from block to flex for centering */
+        }
+
+        .samdues-checkbox.loading {
+            border-color: var(--border-color);
+        }
+
+        /* Spinner Ring */
+        .samdues-spinner {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid var(--border-hover);
+            border-top: 2.5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: samdues-spin 0.6s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+            display: none;
+        }
+
+        .samdues-checkbox.loading .samdues-spinner {
+            display: block;
+        }
+
+        /* Checkmark */
+        .samdues-checkmark {
+            display: none;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .samdues-checkmark::after {
+            content: '';
+            display: block;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2.5px 2.5px 0;
+            transform: rotate(45deg);
+            margin-bottom: 3px;
+            /* Optical vertical centering */
+            animation: samdues-check-scale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes samdues-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes samdues-check-scale {
+            0% {
+                transform: rotate(45deg) scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: rotate(45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* --- New Animations --- */
+        @keyframes enter-scale {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(5px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes click-shrink {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(0.9);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes success-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        .error-shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+            border-color: var(--error-color) !important;
+        }
+
+        .samdues-widget.animate-enter {
+            animation: enter-scale 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        .samdues-checkbox:active {
+            transform: scale(0.92);
+        }
+
+        .samdues-checkbox.success {
+            animation: success-pulse 0.6s ease-out;
+        }
+
+        .samdues-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            letter-spacing: -0.01em;
+        }
+
+        /* Starting/Shimmer Effect for Label */
+        .shimmer {
+            background: linear-gradient(90deg,
+                    var(--text-color) 0%,
+                    var(--text-secondary) 50%,
+                    var(--text-color) 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 2s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* --- Right Side: Logo & Links --- */
+        .samdues-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            z-index: 5;
+            padding-left: 14px;
+            /* Increased slightly for visual balance */
+            padding-top: 4px;
+            /* Slight downward shift */
+        }
+
+        .samdues-logo-container {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 2px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateX(4px);
+            /* Shift right to align with dot between Privacy and Terms */
+        }
+
+        .samdues-widget:hover .samdues-logo-container {
+            opacity: 0.9;
+        }
+
+        .samdues-links {
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .samdues-link {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.2s;
+        }
+
+        .samdues-link:hover {
+            color: var(--primary-color);
+        }
+
+        /* Status message overlay */
+        .status-overlay {
+            position: absolute;
+            bottom: 6px;
+            left: 56px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--error-color);
+            opacity: 0;
+            transform: translateY(4px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .show-status {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 320px) {
+            .samdues-widget {
+                padding: 0 10px;
+            }
+
+            .samdues-content {
+                gap: 8px;
+            }
+
+            .samdues-footer {
+                padding-left: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="samdues-widget animate-enter" id="widget-root">
+
+        <!-- Standard Checkbox Mode -->
+        <div class="samdues-content" id="click-target">
+            <!-- Math Challenge UI (Hidden by default) -->
+            <div id="math-challenge" style="display: none; align-items: center; gap: 8px;">
+                <span id="math-question" style="font-size: 14px; font-weight: 600; color: var(--text-color);"></span>
+                <input type="text" id="math-answer" placeholder="?"
+                    style="width: 40px; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;">
+                <button id="math-submit"
+                    style="padding: 4px 8px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">OK</button>
+            </div>
+
+            <div id="checkbox-container" style="display: flex; align-items: center; gap: 14px;">
+                <input type="checkbox" id="human-check" style="display:none">
+                <div class="samdues-checkbox" id="custom-check">
+                    <div class="samdues-spinner"></div>
+                    <div class="samdues-checkmark"></div>
+                </div>
+                <span class="samdues-label" id="check-label">Verify you are human</span>
+            </div>
+
+            <div id="status-msg" class="status-overlay"></div>
+        </div>
+
+        <!-- Right Footer -->
+        <div class="samdues-footer">
+            <div class="samdues-logo-container">
+                <svg height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L4 5V11C4 16.1 7.4 20.8 12 22C16.6 20.8 20 16.1 20 11V5L12 2Z"
+                        fill="var(--primary-color)" fill-opacity="0.1" stroke="var(--primary-color)" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M9 12L11 14L15 10" stroke="var(--primary-color)" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <div class="samdues-links">
+                <a href="#" class="samdues-link">Privacy</a>
+                <span>&bull;</span>
+                <a href="#" class="samdues-link">Terms</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="widget-core.js"></script>
+</body>
+
+</html>
