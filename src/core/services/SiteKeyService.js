@@ -6,11 +6,19 @@ class SiteKeyService {
         this.keys = new Map();
 
         // Seed Default Demo Key
-        this.keys.set('1234567890', {
+        const demoSiteKey = process.env.CAPTCHA_DEMO_SITE_KEY || '1234567890';
+        const demoSecretKey = process.env.CAPTCHA_DEMO_SECRET_KEY || 'demo-private-key';
+
+        let demoDomains = ['localhost', '127.0.0.1'];
+        if (process.env.CAPTCHA_DEMO_DOMAINS) {
+            demoDomains = process.env.CAPTCHA_DEMO_DOMAINS.split(',').map(d => d.trim()).filter(Boolean);
+        }
+
+        this.keys.set(demoSiteKey, {
             name: 'Demo App',
-            domains: ['localhost', '127.0.0.1'], // Allowed hostnames
+            domains: demoDomains, // Allowed hostnames
             active: true,
-            privateKey: 'demo-private-key'
+            privateKey: demoSecretKey
         });
     }
 

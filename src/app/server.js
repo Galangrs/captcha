@@ -33,16 +33,21 @@ app.use(helmet({
 
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '*')
     .split(',')
-    .map(origin => origin.trim());
+    .map(origin => origin.trim().replace(/\/$/, '').replace(/\/\*$/, ''));
 
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl requests)
+        // DEBUG: Log origin check
         if (!origin) return callback(null, true);
+
+        console.log(`[CORS DEBUG] Origin: '${origin}'`);
+        console.log(`[CORS DEBUG] Allowed:`, allowedOrigins);
+
         if (allowedOrigins.includes('*') || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(new Error(`Not allowed by CORS: ${origin}`));
         }
     },
     credentials: true // Set to true if we expect cookies/auth headers later
