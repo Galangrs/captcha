@@ -1,5 +1,5 @@
 (function () {
-    const API_BASE = 'http://localhost:3000/api/v1';
+    const API_BASE = '__APP_DATA__/api/v1';
 
     // State (in closure)
     let siteKey = null;

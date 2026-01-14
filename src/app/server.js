@@ -108,8 +108,18 @@ app.use('/cdn', (req, res, next) => {
         fs.readFile(validPath, (err, data) => {
             if (err) return next();
 
+            let content = data;
+
+            // Text Replacement (for JS/HTML)
+            if (req.url.endsWith('.js') || req.url.endsWith('.html')) {
+                let text = data.toString('utf-8');
+                const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+                text = text.replace(/__APP_DATA__/g, appUrl);
+                content = Buffer.from(text, 'utf-8');
+            }
+
             // Compress to Binary (Gzip)
-            zlib.gzip(data, (error, compressed) => {
+            zlib.gzip(content, (error, compressed) => {
                 if (error) return next(error);
 
                 res.setHeader('Content-Type', 'application/javascript');

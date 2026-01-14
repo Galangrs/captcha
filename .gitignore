@@ -32,3 +32,5 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+demo.html

@@ -1,5 +1,5 @@
 (function (window) {
-    const CDN_BASE = 'http://localhost:3000/cdn';
+    const CDN_BASE = '__APP_DATA__/cdn';
 
     class SecureCaptcha {
         constructor(config) {
@@ -76,7 +76,7 @@
         _setupMessageListener() {
             window.addEventListener('message', (event) => {
                 // Verify origin (loose check for localhost)
-                if (event.origin !== 'http://localhost:3000') return;
+                if (event.origin !== '__APP_DATA__') return;
 
                 try {
                     const data = JSON.parse(event.data);
